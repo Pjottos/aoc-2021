@@ -6,14 +6,14 @@ pub mod ex;
 
 const YEAR: u32 = 2021;
 
-pub fn input<X: InputExtractor>(day: u32) -> X::Output {
+pub fn input<X: InputExtractor>(day: u32, extractor: &X) -> X::Output {
     let path = format!("inputs/{}.txt", day);
     let text = fs::read_to_string(&path).unwrap_or_else(|_| {
         let text = download_input(day);
         fs::write(&path, &text).unwrap();
         text
     });
-    X::extract(text)
+    extractor.extract(text)
 }
 
 fn download_input(day: u32) -> String {
@@ -42,5 +42,5 @@ fn download_input(day: u32) -> String {
 pub trait InputExtractor {
     type Output;
 
-    fn extract(text: String) -> Self::Output;
+    fn extract(&self, text: String) -> Self::Output;
 }

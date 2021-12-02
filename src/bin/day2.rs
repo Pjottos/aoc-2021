@@ -1,7 +1,7 @@
 use aoc_2021::{ex, input};
 
 fn main() {
-    let cmds = input::<ex::SubmarineCmds>(2);
+    let cmds = input(2, &ex::SubmarineCmds);
 
     println!("part 1: {:#?}", {
         let mut hor = 0;
