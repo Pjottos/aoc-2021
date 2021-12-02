@@ -1,6 +1,10 @@
-use aoc_2021::{ex, input};
+use aoc_2021::{
+    ex::{self, types::SubmarineCmd},
+    input,
+};
 
 fn main() {
+    use SubmarineCmd::*;
     let cmds = input(2, &ex::SubmarineCmds);
 
     println!("part 1: {:#?}", {
@@ -9,10 +13,9 @@ fn main() {
 
         for (kind, val) in &cmds {
             match kind {
-                0 => hor += val,
-                1 => depth += val,
-                2 => depth -= val,
-                _ => (),
+                Forward => hor += val,
+                Down => depth += val,
+                Up => depth -= val,
             }
         }
 
@@ -26,13 +29,12 @@ fn main() {
 
         for (kind, val) in &cmds {
             match kind {
-                0 => {
+                Forward => {
                     hor += val;
                     depth += aim * val;
                 }
-                1 => aim += val,
-                2 => aim -= val,
-                _ => (),
+                Down => aim += val,
+                Up => aim -= val,
             }
         }
 

@@ -13,21 +13,39 @@ impl InputExtractor for Numbers {
 pub struct SubmarineCmds;
 
 impl InputExtractor for SubmarineCmds {
-    type Output = Vec<(u8, i64)>;
+    type Output = Vec<(types::SubmarineCmd, i64)>;
 
     fn extract(&self, text: String) -> Self::Output {
         text.lines()
             .map(|l| {
                 let mut parts = l.split(' ');
-                let kind = match parts.next().unwrap() {
-                    "forward" => 0,
-                    "down" => 1,
-                    "up" => 2,
-                    _ => panic!(),
-                };
+                let kind = parts.next().unwrap().parse().unwrap();
                 let val = parts.next().unwrap().parse().unwrap();
                 (kind, val)
             })
             .collect()
+    }
+}
+
+pub mod types {
+    use std::str::FromStr;
+
+    pub enum SubmarineCmd {
+        Forward,
+        Up,
+        Down,
+    }
+
+    impl FromStr for SubmarineCmd {
+        type Err = ();
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            match s {
+                "forward" => Ok(Self::Forward),
+                "down" => Ok(Self::Down),
+                "up" => Ok(Self::Up),
+                _ => Err(()),
+            }
+        }
     }
 }
