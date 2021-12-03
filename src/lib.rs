@@ -13,7 +13,7 @@ pub fn input<X: InputExtractor>(day: u32, extractor: &X) -> X::Output {
         fs::write(&path, &text).unwrap();
         text
     });
-    extractor.extract(text)
+    extractor.extract(&text)
 }
 
 fn download_input(day: u32) -> String {
@@ -42,5 +42,5 @@ fn download_input(day: u32) -> String {
 pub trait InputExtractor {
     type Output;
 
-    fn extract(&self, text: String) -> Self::Output;
+    fn extract(&self, text: &str) -> Self::Output;
 }
