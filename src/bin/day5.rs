@@ -1,7 +1,45 @@
 use aoc_2021::*;
 
+use std::str::FromStr;
+
+struct CloudLines;
+
+impl InputExtractor for CloudLines {
+    type Output = Vec<(Point, Point)>;
+
+    fn extract(&self, text: &str) -> Self::Output {
+        text.lines()
+            .map(|l| {
+                let mut parts = l.split(" -> ");
+                (
+                    parts.next().unwrap().parse().unwrap(),
+                    parts.next().unwrap().parse().unwrap(),
+                )
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Point {
+    pub x: usize,
+    pub y: usize,
+}
+
+impl FromStr for Point {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut nums = s.split(',');
+        let x = nums.next().ok_or(())?.parse().map_err(|_| ())?;
+        let y = nums.next().ok_or(())?.parse().map_err(|_| ())?;
+
+        Ok(Self { x, y })
+    }
+}
+
 fn main() {
-    let lines = input(5, &ex::CloudLines);
+    let lines = input(5, &CloudLines);
     let mut grid = vec![0u8; 1024 * 1024];
 
     println!("part 1: {:#?}", {
