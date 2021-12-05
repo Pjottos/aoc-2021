@@ -1,4 +1,4 @@
-use crate::InputExtractor;
+use crate::{ex::types::*, InputExtractor};
 
 pub struct Numbers;
 
@@ -13,7 +13,7 @@ impl InputExtractor for Numbers {
 pub struct SubmarineCmds;
 
 impl InputExtractor for SubmarineCmds {
-    type Output = Vec<(types::SubmarineCmd, i64)>;
+    type Output = Vec<(SubmarineCmd, i64)>;
 
     fn extract(&self, text: &str) -> Self::Output {
         text.lines()
@@ -39,9 +39,28 @@ impl InputExtractor for BinaryNumbers {
     }
 }
 
+pub struct CloudLines;
+
+impl InputExtractor for CloudLines {
+    type Output = Vec<(Point, Point)>;
+
+    fn extract(&self, text: &str) -> Self::Output {
+        text.lines()
+            .map(|l| {
+                let mut parts = l.split(" -> ");
+                (
+                    parts.next().unwrap().parse().unwrap(),
+                    parts.next().unwrap().parse().unwrap(),
+                )
+            })
+            .collect()
+    }
+}
+
 pub mod types {
     use std::str::FromStr;
 
+    #[derive(Debug, Clone, Copy)]
     pub enum SubmarineCmd {
         Forward,
         Up,
@@ -58,6 +77,24 @@ pub mod types {
                 "up" => Ok(Self::Up),
                 _ => Err(()),
             }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    pub struct Point {
+        pub x: usize,
+        pub y: usize,
+    }
+
+    impl FromStr for Point {
+        type Err = ();
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let mut nums = s.split(',');
+            let x = nums.next().ok_or(())?.parse().map_err(|_| ())?;
+            let y = nums.next().ok_or(())?.parse().map_err(|_| ())?;
+
+            Ok(Self { x, y })
         }
     }
 }
