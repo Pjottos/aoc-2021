@@ -18,6 +18,7 @@ where
     extractor: X,
     part_1: Option<P1>,
     part_2: Option<P2>,
+    input_override: Option<&'static str>,
 }
 
 impl<X, P1, P2> Harness<X, P1, P2>
@@ -31,12 +32,17 @@ where
     }
 
     pub fn run(self) {
-        let input_path = format!("inputs/{}.txt", self.day);
-        let text = fs::read_to_string(&input_path).unwrap_or_else(|_| {
-            let text = download_input(self.day);
-            fs::write(&input_path, &text).unwrap();
-            text
-        });
+        let text = match self.input_override {
+            Some(v) => v.to_owned(),
+            None => {
+                let input_path = format!("inputs/{}.txt", self.day);
+                fs::read_to_string(&input_path).unwrap_or_else(|_| {
+                    let text = download_input(self.day);
+                    fs::write(&input_path, &text).unwrap();
+                    text
+                })
+            }
+        };
 
         let begin = Instant::now();
         let input = self.extractor.extract(&text);
@@ -65,6 +71,7 @@ where
     extractor: Option<X>,
     part_1: Option<P1>,
     part_2: Option<P2>,
+    input_override: Option<&'static str>,
 }
 
 impl<X, P1, P2> Default for HarnessBuilder<X, P1, P2>
@@ -79,6 +86,7 @@ where
             extractor: None,
             part_1: None,
             part_2: None,
+            input_override: None,
         }
     }
 }
@@ -109,12 +117,18 @@ where
         self
     }
 
+    pub fn input_override(mut self, input_override: &'static str) -> Self {
+        self.input_override = Some(input_override);
+        self
+    }
+
     pub fn run(self) {
         let harness = Harness {
             day: self.day.unwrap(),
             extractor: self.extractor.unwrap(),
             part_1: self.part_1,
             part_2: self.part_2,
+            input_override: self.input_override,
         };
 
         harness.run();
