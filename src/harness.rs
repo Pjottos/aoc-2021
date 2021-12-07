@@ -57,13 +57,13 @@ where
         let part_2_time = begin.elapsed();
 
         println!(
-            "part 1: {:?} in {:?} ({:?})",
+            "part 1: {:?} in {:?} ({:?} excluding parsing)",
             res_1,
             extract_time + part_1_time,
             part_1_time
         );
         println!(
-            "part 2: {:?} in {:?} ({:?})",
+            "part 2: {:?} in {:?} ({:?} excluding parsing)",
             res_2,
             extract_time + part_2_time,
             part_2_time
