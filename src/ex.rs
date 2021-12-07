@@ -21,13 +21,3 @@ impl InputExtractor for BinaryNumbers {
             .collect()
     }
 }
-
-pub struct CommaNumbers;
-
-impl InputExtractor for CommaNumbers {
-    type Output = Vec<i64>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.split(',').map(|p| p.trim().parse().unwrap()).collect()
-    }
-}

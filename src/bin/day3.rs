@@ -3,42 +3,43 @@ use aoc_2021::*;
 const BIT_COUNT: usize = 12;
 
 fn main() {
-    let nums = input(3, &ex::BinaryNumbers);
-    // let nums = ex::BinaryNumbers.extract("00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010\n");
+    Harness::builder()
+        .day(3)
+        .extractor(ex::BinaryNumbers)
+        // .input_override("00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010\n")
+        .part_1(|nums| {
+            let gamma = make_common_mask(nums);
+            let epsilon = !gamma & !(!0 << BIT_COUNT);
 
-    println!("part 1: {:#?}", {
-        let gamma = make_common_mask(&nums);
-        let epsilon = !gamma & !(!0 << BIT_COUNT);
+            // println!("g: {:12.b}\ne: {:12.b}", gamma, epsilon);
 
-        println!("g: {:12.b}\ne: {:12.b}", gamma, epsilon);
+            (gamma * epsilon) as i64
+        })
+        .part_2(|nums| {
+            let mut oxygen = nums.clone();
+            let mut co2 = nums.clone();
+            for i in 0..BIT_COUNT {
+                let mask = 1 << (BIT_COUNT - 1 - i);
 
-        gamma * epsilon
-    });
-
-    println!("part 2: {:#?}", {
-        let mut oxygen = nums.clone();
-        let mut co2 = nums;
-        for i in 0..BIT_COUNT {
-            let mask = 1 << (BIT_COUNT - 1 - i);
-
-            println!(
-                "m: {:12.b}, o: {:4}, c: {:4}",
-                mask,
-                oxygen.len(),
-                co2.len()
-            );
-            if oxygen.len() > 1 {
-                let common_mask = make_single_common_mask(&oxygen, i);
-                oxygen.retain(|n| n & mask == common_mask);
+                // println!(
+                //     "m: {:12.b}, o: {:4}, c: {:4}",
+                //     mask,
+                //     oxygen.len(),
+                //     co2.len()
+                // );
+                if oxygen.len() > 1 {
+                    let common_mask = make_single_common_mask(&oxygen, i);
+                    oxygen.retain(|n| n & mask == common_mask);
+                }
+                if co2.len() > 1 {
+                    let common_mask = make_single_common_mask(&co2, i);
+                    co2.retain(|n| !n & mask == common_mask);
+                }
             }
-            if co2.len() > 1 {
-                let common_mask = make_single_common_mask(&co2, i);
-                co2.retain(|n| !n & mask == common_mask);
-            }
-        }
 
-        oxygen[0] * co2[0]
-    });
+            (oxygen[0] * co2[0]) as i64
+        })
+        .run();
 }
 
 fn make_common_mask(nums: &[u64]) -> u64 {

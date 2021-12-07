@@ -18,15 +18,16 @@ impl InputExtractor for FishBins {
 }
 
 fn main() {
-    let mut bins = input(6, &FishBins);
-    // let mut bins = FishBins.extract("3,4,3,1,2");
-
-    println!("part 1: {:#?}", run_days(&mut bins, 80));
-
-    println!("part 2: {:#?}", run_days(&mut bins, 256 - 80));
+    Harness::builder()
+        .day(6)
+        .extractor(FishBins)
+        // .input_override("3,4,3,1,2")
+        .part_1(|&bins| run_days(bins, 80))
+        .part_2(|&bins| run_days(bins, 256))
+        .run();
 }
 
-fn run_days(bins: &mut [u64; 9], days: usize) -> u64 {
+fn run_days(mut bins: [u64; 9], days: usize) -> i64 {
     for _ in 0..days {
         // amount of new born fish this day, same number as the amount of parents
         let new_born = bins[0];
@@ -41,5 +42,5 @@ fn run_days(bins: &mut [u64; 9], days: usize) -> u64 {
         bins[6] += new_born;
     }
 
-    bins.iter().sum()
+    bins.iter().sum::<u64>() as i64
 }
