@@ -56,8 +56,18 @@ where
         let res_2 = self.part_2.map(|f| f(&input));
         let part_2_time = begin.elapsed();
 
-        println!("part 1: {:?} in {:?}", res_1, extract_time + part_1_time);
-        println!("part 2: {:?} in {:?}", res_2, extract_time + part_2_time);
+        println!(
+            "part 1: {:?} in {:?} ({:?})",
+            res_1,
+            extract_time + part_1_time,
+            part_1_time
+        );
+        println!(
+            "part 2: {:?} in {:?} ({:?})",
+            res_2,
+            extract_time + part_2_time,
+            part_2_time
+        );
     }
 }
 
