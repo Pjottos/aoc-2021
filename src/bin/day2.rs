@@ -41,39 +41,40 @@ impl FromStr for SubmarineCmd {
 
 fn main() {
     use SubmarineCmd::*;
-    let cmds = input(2, &SubmarineCmds);
+    Harness::builder()
+        .day(2)
+        .extractor(SubmarineCmds)
+        .part_1(|cmds| {
+            let mut hor = 0;
+            let mut depth = 0;
 
-    println!("part 1: {:#?}", {
-        let mut hor = 0;
-        let mut depth = 0;
-
-        for (kind, val) in &cmds {
-            match kind {
-                Forward => hor += val,
-                Down => depth += val,
-                Up => depth -= val,
-            }
-        }
-
-        hor * depth
-    });
-
-    println!("part 2: {:#?}", {
-        let mut hor = 0;
-        let mut depth = 0;
-        let mut aim = 0;
-
-        for (kind, val) in &cmds {
-            match kind {
-                Forward => {
-                    hor += val;
-                    depth += aim * val;
+            for (kind, val) in cmds {
+                match kind {
+                    Forward => hor += val,
+                    Down => depth += val,
+                    Up => depth -= val,
                 }
-                Down => aim += val,
-                Up => aim -= val,
             }
-        }
 
-        hor * depth
-    });
+            hor * depth
+        })
+        .part_2(|cmds| {
+            let mut hor = 0;
+            let mut depth = 0;
+            let mut aim = 0;
+
+            for (kind, val) in cmds {
+                match kind {
+                    Forward => {
+                        hor += val;
+                        depth += aim * val;
+                    }
+                    Down => aim += val,
+                    Up => aim -= val,
+                }
+            }
+
+            hor * depth
+        })
+        .run();
 }

@@ -109,13 +109,15 @@ where
         self
     }
 
-    pub fn build(self) -> Option<Harness<X, P1, P2>> {
-        Some(Harness {
-            day: self.day?,
-            extractor: self.extractor?,
+    pub fn run(self) {
+        let harness = Harness {
+            day: self.day.unwrap(),
+            extractor: self.extractor.unwrap(),
             part_1: self.part_1,
             part_2: self.part_2,
-        })
+        };
+
+        harness.run();
     }
 }
 
