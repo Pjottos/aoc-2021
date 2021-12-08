@@ -1,23 +1,9 @@
-use crate::InputExtractor;
-
-pub struct Numbers;
-
-impl InputExtractor for Numbers {
-    type Output = Vec<i64>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.lines().map(|l| l.parse().unwrap()).collect()
-    }
+pub fn nums(text: &str) -> Vec<i64> {
+    text.lines().map(|l| l.parse().unwrap()).collect()
 }
 
-pub struct BinaryNumbers;
-
-impl InputExtractor for BinaryNumbers {
-    type Output = Vec<u64>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.lines()
-            .map(|l| u64::from_str_radix(l, 2).unwrap())
-            .collect()
-    }
+pub fn binary_nums(text: &str) -> Vec<u64> {
+    text.lines()
+        .map(|l| u64::from_str_radix(l, 2).unwrap())
+        .collect()
 }

@@ -1,95 +1,69 @@
 use aoc_2021::*;
 
-struct Notes;
+fn main() {
+    let unique = [(2, 1), (4, 4), (3, 7), (7, 8)];
 
-impl InputExtractor for Notes {
-    type Output = Vec<(Vec<Vec<u8>>, Vec<Vec<u8>>)>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.lines()
-            .map(|l| {
+    Harness::begin()
+        .day(8)
+        .extract(|text| {
+            text.lines().map(|l| {
                 let mut parts = l.split('|');
                 let combos = parts
                     .next()
                     .unwrap()
                     .split_ascii_whitespace()
-                    .map(|w| w.as_bytes().to_vec())
-                    .collect();
+                    .map(|w| w.as_bytes());
                 let output = parts
                     .next()
                     .unwrap()
                     .split_ascii_whitespace()
-                    .map(|w| w.as_bytes().to_vec())
-                    .collect();
+                    .map(|w| w.as_bytes());
                 (combos, output)
             })
-            .collect()
-    }
-}
-
-fn main() {
-    let unique = vec![(2, 1), (4, 4), (3, 7), (7, 8)];
-
-    Harness::builder()
-        .day(8)
-        .extractor(Notes)
-        .part_1(|lines| {
+        })
+        .run_part(1, |lines| {
             lines
-                .iter()
+                .clone()
                 .map(|(_, output)| {
                     output
-                        .iter()
                         .filter(|w| unique.iter().position(|(l, _)| *l == w.len()).is_some())
-                        .count() as i64
+                        .count() as u32
                 })
-                .sum()
+                .sum::<u32>()
         })
-        .part_2(|lines| {
+        .run_part(2, |lines| {
             lines
-                .iter()
+                .clone()
                 .map(|(combos, encoded)| {
-                    let mut digits = vec![];
+                    let mut digits = [0u8; 10];
 
-                    let mut one = None;
-                    let mut four = None;
-                    let remaining: Vec<_> = combos
-                        .iter()
-                        .filter(|c| {
+                    for c in combos.clone() {
+                        if let Some((_, v)) = unique.iter().find(|(l, _)| *l == c.len()) {
                             let bits = digit_bits(c);
-                            unique
-                                .iter()
-                                .copied()
-                                .find(|(l, _)| *l == c.len())
-                                .map(|(_, v)| {
-                                    if v == 1 {
-                                        one = Some(bits);
-                                    } else if v == 4 {
-                                        four = Some(bits);
-                                    }
+                            digits[*v] = bits;
+                        }
+                    }
 
-                                    digits.push((bits, v));
-                                })
-                                .is_none()
-                        })
-                        .collect();
+                    // all unique digits should have been found
+                    assert!(unique.iter().all(|(_, v)| digits[*v] != 0));
 
-                    let one = one.unwrap();
-                    let four = four.unwrap();
-                    for r in remaining {
-                        let bits = digit_bits(r);
-                        let digit = if r.len() == 5 {
-                            if bits & one == one {
+                    for r in combos
+                        .map(|c| digit_bits(&c))
+                        .filter(|&bits| !unique.iter().any(|(l, _)| *l as u32 == bits.count_ones()))
+                    {
+                        let digit = if r.count_ones() == 5 {
+                            if r & digits[1] == digits[1] {
                                 3
                             } else {
-                                if (bits & four).count_ones() == 2 {
+                                if (r & digits[4]).count_ones() == 2 {
                                     2
                                 } else {
                                     5
                                 }
                             }
                         } else {
-                            if bits & one == one {
-                                if bits & four == four {
+                            if r & digits[1] == digits[1] {
+                                if r & digits[4] == digits[4] {
                                     9
                                 } else {
                                     0
@@ -99,19 +73,18 @@ fn main() {
                             }
                         };
 
-                        digits.push((bits, digit));
+                        digits[digit] = r;
                     }
 
-                    encoded.iter().enumerate().fold(0, |num, (i, o)| {
+                    encoded.enumerate().fold(0, |num, (i, o)| {
                         let bits = digit_bits(o);
-                        let digit = digits.iter().find(|(d, _)| *d == bits).unwrap().1;
+                        let digit = digits.iter().position(|&b| b == bits).unwrap() as u32;
 
-                        num + digit * 10i64.pow(3 - i as u32)
+                        num + digit * 10u32.pow(3 - i as u32)
                     })
                 })
-                .sum()
-        })
-        .run();
+                .sum::<u32>()
+        });
 }
 
 fn digit_bits(chars: &[u8]) -> u8 {

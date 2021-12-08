@@ -1,147 +1,81 @@
 use reqwest::{blocking::ClientBuilder, cookie};
 
-use std::{fs, sync::Arc, time::Instant};
+use std::{
+    fmt::Debug,
+    fs,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
-pub trait InputExtractor {
-    type Output;
-
-    fn extract(&self, text: &str) -> Self::Output;
-}
-
-pub struct Harness<X, P1, P2>
-where
-    X: InputExtractor,
-    P1: FnOnce(&X::Output) -> i64,
-    P2: FnOnce(&X::Output) -> i64,
-{
-    day: u32,
-    extractor: X,
-    part_1: Option<P1>,
-    part_2: Option<P2>,
-    input_override: Option<&'static str>,
-}
-
-impl<X, P1, P2> Harness<X, P1, P2>
-where
-    X: InputExtractor,
-    P1: FnOnce(&X::Output) -> i64,
-    P2: FnOnce(&X::Output) -> i64,
-{
-    pub fn builder() -> HarnessBuilder<X, P1, P2> {
-        HarnessBuilder::default()
-    }
-
-    pub fn run(self) {
-        let text = match self.input_override {
-            Some(v) => v.to_owned(),
-            None => {
-                let input_path = format!("inputs/{}.txt", self.day);
-                fs::read_to_string(&input_path).unwrap_or_else(|_| {
-                    let text = download_input(self.day);
-                    fs::write(&input_path, &text).unwrap();
-                    text
-                })
-            }
-        };
-
-        let begin = Instant::now();
-        let input = self.extractor.extract(&text);
-        let extract_time = begin.elapsed();
-
-        let begin = Instant::now();
-        let res_1 = self.part_1.map(|f| f(&input));
-        let part_1_time = begin.elapsed();
-
-        let begin = Instant::now();
-        let res_2 = self.part_2.map(|f| f(&input));
-        let part_2_time = begin.elapsed();
-
-        println!(
-            "part 1: {:?} in {:?} ({:?} excluding parsing)",
-            res_1,
-            extract_time + part_1_time,
-            part_1_time
-        );
-        println!(
-            "part 2: {:?} in {:?} ({:?} excluding parsing)",
-            res_2,
-            extract_time + part_2_time,
-            part_2_time
-        );
-    }
-}
-
-pub struct HarnessBuilder<X, P1, P2>
-where
-    X: InputExtractor,
-    P1: FnOnce(&X::Output) -> i64,
-    P2: FnOnce(&X::Output) -> i64,
-{
+pub struct Harness<E> {
     day: Option<u32>,
-    extractor: Option<X>,
-    part_1: Option<P1>,
-    part_2: Option<P2>,
-    input_override: Option<&'static str>,
+    input: Option<(E, Duration)>,
+    text: Option<String>,
 }
 
-impl<X, P1, P2> Default for HarnessBuilder<X, P1, P2>
-where
-    X: InputExtractor,
-    P1: FnOnce(&X::Output) -> i64,
-    P2: FnOnce(&X::Output) -> i64,
-{
-    fn default() -> Self {
+impl<'a, E> Harness<E> {
+    pub fn begin() -> Self {
         Self {
             day: None,
-            extractor: None,
-            part_1: None,
-            part_2: None,
-            input_override: None,
+            input: None,
+            text: None,
         }
     }
-}
 
-impl<X, P1, P2> HarnessBuilder<X, P1, P2>
-where
-    X: InputExtractor,
-    P1: FnOnce(&X::Output) -> i64,
-    P2: FnOnce(&X::Output) -> i64,
-{
-    pub fn day(mut self, day: u32) -> Self {
+    pub fn day(&'a mut self, day: u32) -> &'a mut Self {
         self.day = Some(day);
         self
     }
 
-    pub fn extractor(mut self, extractor: X) -> Self {
-        self.extractor = Some(extractor);
+    pub fn input_override<S: Into<String>>(&'a mut self, input_override: S) -> &'a mut Self {
+        self.text = Some(input_override.into());
         self
     }
 
-    pub fn part_1(mut self, part_1: P1) -> Self {
-        self.part_1 = Some(part_1);
+    pub fn extract<X>(&'a mut self, extractor: X) -> &'a Self
+    where
+        X: FnOnce(&'a str) -> E,
+    {
+        let day = self.day.unwrap();
+        if self.text.is_none() {
+            let input_path = format!("inputs/{}.txt", day);
+            let text = fs::read_to_string(&input_path).unwrap_or_else(|_| {
+                let text = download_input(day);
+                fs::write(&input_path, &text).unwrap();
+                text
+            });
+            self.text = Some(text);
+        }
+        let text = self.text.as_ref().unwrap();
+
+        let begin = Instant::now();
+        let input = extractor(text);
+        let extract_time = begin.elapsed();
+
+        self.input = Some((input, extract_time));
         self
     }
 
-    pub fn part_2(mut self, part_2: P2) -> Self {
-        self.part_2 = Some(part_2);
+    pub fn run_part<F, R>(&'a self, part_num: u32, func: F) -> &'a Self
+    where
+        F: FnOnce(&E) -> R,
+        R: Debug,
+    {
+        let (input, extract_time) = self.input.as_ref().expect("input not extracted yet");
+
+        let begin = Instant::now();
+        let res = func(input);
+        let run_time = begin.elapsed();
+
+        println!(
+            "part {}: {:?} in {:?} ({:?} excluding parsing)",
+            part_num,
+            res,
+            *extract_time + run_time,
+            run_time
+        );
+
         self
-    }
-
-    pub fn input_override(mut self, input_override: &'static str) -> Self {
-        self.input_override = Some(input_override);
-        self
-    }
-
-    pub fn run(self) {
-        let harness = Harness {
-            day: self.day.unwrap(),
-            extractor: self.extractor.unwrap(),
-            part_1: self.part_1,
-            part_2: self.part_2,
-            input_override: self.input_override,
-        };
-
-        harness.run();
     }
 }
 
