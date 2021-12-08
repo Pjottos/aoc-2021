@@ -1,6 +1,7 @@
 use reqwest::{blocking::ClientBuilder, cookie};
 
 use std::{
+    env,
     fmt::Debug,
     fs,
     sync::Arc,
@@ -18,21 +19,17 @@ impl<'a, E> Harness<E> {
     const ITERATIONS: usize = 1 << 15;
 
     pub fn begin() -> Self {
+        let bench = env::args().any(|arg| arg == "--bench");
         Self {
             day: None,
             input: None,
             text: None,
-            bench: false,
+            bench,
         }
     }
 
     pub fn day(&'a mut self, day: u32) -> &'a mut Self {
         self.day = Some(day);
-        self
-    }
-
-    pub fn bench(&'a mut self) -> &'a mut Self {
-        self.bench = true;
         self
     }
 
