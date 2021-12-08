@@ -4,10 +4,24 @@ fn main() {
     Harness::begin()
         .day(6)
         .extract(|text| {
+            // Instead of keeping track of each fish individually, we group them by their
+            // birth timer values.
             let mut bins = [0; 9];
 
-            for p in text.split(',') {
-                let idx: usize = p.trim().parse().unwrap();
+            // Parsing like this is ~5x faster than splitting on `,` and parsing a usize.
+            for c in text.as_bytes().chunks_exact(2) {
+                let idx = match c[0] {
+                    b'0' => 0,
+                    b'1' => 1,
+                    b'2' => 2,
+                    b'3' => 3,
+                    b'4' => 4,
+                    b'5' => 5,
+                    b'6' => 6,
+                    b'7' => 7,
+                    b'8' => 8,
+                    _ => panic!("fish age out of range"),
+                };
                 bins[idx] += 1;
             }
 
@@ -20,8 +34,14 @@ fn main() {
 
 fn run_days(mut bins: [u64; 9], days: usize) -> u64 {
     for day in 0..days {
+        // This line does 2 things:
+        // - It adds the parents of the current day to the bin that contains the
+        //   parents for 7 days into the future, effectively resetting their birth timer.
+        // - By not clearing the current bin, the newborn fish will be in
+        //   the last bin on the next day.
         bins[(day + 7) % 9] += bins[day % 9];
     }
 
+    // Return total amount of fish.
     bins.iter().sum()
 }
