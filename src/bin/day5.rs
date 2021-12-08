@@ -2,24 +2,6 @@ use aoc_2021::*;
 
 use std::str::FromStr;
 
-struct CloudLines;
-
-impl InputExtractor for CloudLines {
-    type Output = Vec<(Point, Point)>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.lines()
-            .map(|l| {
-                let mut parts = l.split(" -> ");
-                (
-                    parts.next().unwrap().parse().unwrap(),
-                    parts.next().unwrap().parse().unwrap(),
-                )
-            })
-            .collect()
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 struct Point {
     pub x: usize,
@@ -39,13 +21,21 @@ impl FromStr for Point {
 }
 
 fn main() {
-    Harness::builder()
+    Harness::begin()
         .day(5)
-        .extractor(CloudLines)
-        .part_1(|lines| {
+        .extract(|text| {
+            text.lines().map(|l| {
+                let mut parts = l.split(" -> ");
+                (
+                    parts.next().unwrap().parse::<Point>().unwrap(),
+                    parts.next().unwrap().parse::<Point>().unwrap(),
+                )
+            })
+        })
+        .run_part(1, |lines| {
             let mut grid = vec![0u8; 1024 * 1024];
 
-            for line in lines {
+            for line in lines.clone() {
                 if line.0.x == line.1.x {
                     let min_y = line.0.y.min(line.1.y);
                     let max_y = line.0.y.max(line.1.y);
@@ -64,12 +54,12 @@ fn main() {
                 }
             }
 
-            grid.iter().copied().filter(|&c| c > 1).count() as i64
+            grid.iter().copied().filter(|&c| c > 1).count()
         })
-        .part_2(|lines| {
+        .run_part(2, |lines| {
             let mut grid = vec![0u8; 1024 * 1024];
 
-            for line in lines {
+            for line in lines.clone() {
                 if line.0.x == line.1.x {
                     let min_y = line.0.y.min(line.1.y);
                     let max_y = line.0.y.max(line.1.y);
@@ -107,9 +97,8 @@ fn main() {
                 }
             }
 
-            grid.iter().copied().filter(|&c| c > 1).count() as i64
-        })
-        .run();
+            grid.iter().copied().filter(|&c| c > 1).count()
+        });
 }
 
 // Reverse iterator has a different type so this needs to be a generic function.

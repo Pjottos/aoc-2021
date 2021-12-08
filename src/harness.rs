@@ -68,7 +68,7 @@ impl<'a, E> Harness<E> {
         let run_time = begin.elapsed();
 
         println!(
-            "part {}: {:?} in {:?} ({:?} excluding parsing)",
+            "part {}: {:?} in {:?} ({:?} excluding extract)",
             part_num,
             res,
             *extract_time + run_time,

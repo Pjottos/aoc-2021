@@ -1,37 +1,29 @@
 use aoc_2021::*;
 
-struct CrabPositions;
-
-impl InputExtractor for CrabPositions {
-    type Output = Vec<i64>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        let mut result: Vec<_> = text.split(',').map(|p| p.trim().parse().unwrap()).collect();
-        result.sort_unstable();
-        result
-    }
-}
-
 fn main() {
-    Harness::builder()
+    Harness::begin()
         .day(7)
-        .extractor(CrabPositions)
-        .part_1(|positions| {
+        .extract(|text| {
+            let mut result: Vec<i32> = text.split(',').map(|p| p.trim().parse().unwrap()).collect();
+            result.sort_unstable();
+            result
+        })
+        .run_part(1, |positions| {
             // median
             let target_pos = positions[positions.len() / 2];
             positions
                 .iter()
                 .map(|&p| (target_pos - p).abs())
-                .sum::<i64>()
+                .sum::<i32>()
         })
-        .part_2(|positions| {
-            let cost_function = |target_pos: i64| -> i64 {
+        .run_part(2, |positions| {
+            let cost_function = |target_pos: i32| -> i32 {
                 positions
                     .iter()
                     .map(|&pos| {
                         let steps = (target_pos - pos).abs();
                         // automatically uses (n * (n + 1)) / 2
-                        (1..=steps).sum::<i64>()
+                        (1..=steps).sum::<i32>()
                     })
                     .sum()
             };
@@ -54,6 +46,5 @@ fn main() {
             }
 
             min_cost.unwrap()
-        })
-        .run();
+        });
 }

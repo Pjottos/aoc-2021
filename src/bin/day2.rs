@@ -2,23 +2,6 @@ use aoc_2021::*;
 
 use std::str::FromStr;
 
-struct SubmarineCmds;
-
-impl InputExtractor for SubmarineCmds {
-    type Output = Vec<(SubmarineCmd, i64)>;
-
-    fn extract(&self, text: &str) -> Self::Output {
-        text.lines()
-            .map(|l| {
-                let mut parts = l.split(' ');
-                let kind = parts.next().unwrap().parse().unwrap();
-                let val = parts.next().unwrap().parse().unwrap();
-                (kind, val)
-            })
-            .collect()
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 enum SubmarineCmd {
     Forward,
@@ -41,14 +24,21 @@ impl FromStr for SubmarineCmd {
 
 fn main() {
     use SubmarineCmd::*;
-    Harness::builder()
+    Harness::begin()
         .day(2)
-        .extractor(SubmarineCmds)
-        .part_1(|cmds| {
+        .extract(|text| {
+            text.lines().map(|l| {
+                let mut parts = l.split(' ');
+                let kind = parts.next().unwrap().parse().unwrap();
+                let val = parts.next().unwrap().parse::<i32>().unwrap();
+                (kind, val)
+            })
+        })
+        .run_part(1, |cmds| {
             let mut hor = 0;
             let mut depth = 0;
 
-            for (kind, val) in cmds {
+            for (kind, val) in cmds.clone() {
                 match kind {
                     Forward => hor += val,
                     Down => depth += val,
@@ -58,12 +48,12 @@ fn main() {
 
             hor * depth
         })
-        .part_2(|cmds| {
+        .run_part(2, |cmds| {
             let mut hor = 0;
             let mut depth = 0;
             let mut aim = 0;
 
-            for (kind, val) in cmds {
+            for (kind, val) in cmds.clone() {
                 match kind {
                     Forward => {
                         hor += val;
@@ -75,6 +65,5 @@ fn main() {
             }
 
             hor * depth
-        })
-        .run();
+        });
 }

@@ -3,19 +3,19 @@ use aoc_2021::*;
 const BIT_COUNT: usize = 12;
 
 fn main() {
-    Harness::builder()
+    Harness::begin()
         .day(3)
-        .extractor(ex::BinaryNumbers)
+        .extract(ex::binary_nums)
         // .input_override("00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010\n")
-        .part_1(|nums| {
+        .run_part(1, |nums| {
             let gamma = make_common_mask(nums);
             let epsilon = !gamma & !(!0 << BIT_COUNT);
 
             // println!("g: {:12.b}\ne: {:12.b}", gamma, epsilon);
 
-            (gamma * epsilon) as i64
+            gamma * epsilon
         })
-        .part_2(|nums| {
+        .run_part(2, |nums| {
             let mut oxygen = nums.clone();
             let mut co2 = nums.clone();
             for i in 0..BIT_COUNT {
@@ -37,9 +37,8 @@ fn main() {
                 }
             }
 
-            (oxygen[0] * co2[0]) as i64
-        })
-        .run();
+            oxygen[0] * co2[0]
+        });
 }
 
 fn make_common_mask(nums: &[u64]) -> u64 {
