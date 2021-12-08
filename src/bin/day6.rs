@@ -9,17 +9,9 @@ fn main() {
             let mut bins = [0; 9];
 
             // Parsing like this is ~5x faster than splitting on `,` and parsing a usize.
-            for c in text.as_bytes().chunks_exact(2) {
-                let idx = match c[0] {
-                    b'0' => 0,
-                    b'1' => 1,
-                    b'2' => 2,
-                    b'3' => 3,
-                    b'4' => 4,
-                    b'5' => 5,
-                    b'6' => 6,
-                    b'7' => 7,
-                    b'8' => 8,
+            for chunk in text.as_bytes().chunks_exact(2) {
+                let idx = match chunk[0] {
+                    c @ b'0'..=b'8' => (c - b'0') as usize,
                     _ => panic!("fish age out of range"),
                 };
                 bins[idx] += 1;
