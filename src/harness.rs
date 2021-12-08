@@ -4,6 +4,7 @@ use std::{
     env,
     fmt::Debug,
     fs,
+    hint::black_box,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -16,8 +17,6 @@ pub struct Harness<E> {
 }
 
 impl<'a, E> Harness<E> {
-    const ITERATIONS: usize = 1 << 15;
-
     pub fn begin() -> Self {
         let bench = env::args().any(|arg| arg == "--bench");
         Self {
@@ -54,21 +53,36 @@ impl<'a, E> Harness<E> {
         }
         let text = self.text.as_ref().unwrap();
 
-        let mut time_sum = 0;
         let input = extractor(text);
-
-        if self.bench {
-            for _ in 0..Self::ITERATIONS {
-                let begin = Instant::now();
-                extractor(text);
-                time_sum += begin.elapsed().as_nanos();
-            }
-        }
-
-        let extract_time = Duration::from_nanos((time_sum / Self::ITERATIONS as u128) as u64);
+        let extract_time = self
+            .run_bench(|| black_box(extractor(text)))
+            .unwrap_or_default();
 
         self.input = Some((input, extract_time));
         self
+    }
+
+    fn run_bench<F, R>(&self, func: F) -> Option<Duration>
+    where
+        F: Fn() -> R,
+    {
+        self.bench.then(|| {
+            let begin = Instant::now();
+            let mut warmup_count = 0;
+            while begin.elapsed() < Duration::from_secs(2) {
+                func();
+                warmup_count += 1;
+            }
+
+            let iterations = warmup_count * 3;
+            let begin = Instant::now();
+            for _ in 0..iterations {
+                func();
+            }
+            let nanos = begin.elapsed().as_nanos() as u64;
+
+            Duration::from_nanos(nanos / iterations)
+        })
     }
 
     pub fn run_part<F, R>(&'a self, part_num: u32, func: F) -> &'a Self
@@ -78,19 +92,10 @@ impl<'a, E> Harness<E> {
     {
         let (input, extract_time) = self.input.as_ref().expect("input not extracted yet");
 
-        let mut time_sum = 0;
         let res = func(input);
         println!("Part {}: {:?}", part_num, res);
 
-        if self.bench {
-            for _ in 0..Self::ITERATIONS {
-                let begin = Instant::now();
-                func(input);
-                time_sum += begin.elapsed().as_nanos();
-            }
-
-            let run_time = Duration::from_nanos((time_sum / Self::ITERATIONS as u128) as u64);
-
+        if let Some(run_time) = self.run_bench(|| black_box(func(input))) {
             println!(
                 "Bench: {:?} ({:?} excluding extract)",
                 *extract_time + run_time,
