@@ -83,7 +83,6 @@ impl<'a, E> Harness<E> {
         println!("Part {}: {:?}", part_num, res);
 
         if self.bench {
-            println!("Running benchmark...");
             for _ in 0..Self::ITERATIONS {
                 let begin = Instant::now();
                 func(input);
@@ -93,7 +92,7 @@ impl<'a, E> Harness<E> {
             let run_time = Duration::from_nanos((time_sum / Self::ITERATIONS as u128) as u64);
 
             println!(
-                "Result: {:?} ({:?} excluding extract)",
+                "Bench: {:?} ({:?} excluding extract)",
                 *extract_time + run_time,
                 run_time,
             );
