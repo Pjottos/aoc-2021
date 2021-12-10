@@ -21,7 +21,7 @@ These are the benchmark results on my PC. Keep in mind the time is measured from
 
 | Day | Part 1     | Part 2     |
 |-----|------------|------------|
-| 1   | 23.248 µs  | 23.248 µs  |
+| 1   | 22.393 µs  | 22.394 µs  |
 | 2   | 24.492 µs  | 24.672 µs  |
 | 3   | 479 ns     | 5.42 µs    |
 | 4   | 37.051 µs  | 73.21 µs   |
