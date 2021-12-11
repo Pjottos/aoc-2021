@@ -30,3 +30,4 @@ These are the benchmark results on my PC. Keep in mind the time is measured from
 | 7   | 21.255 µs  | 32.354 µs  |
 | 8   | 11.348 µs  | 51.588 µs  |
 | 10  | 8.297 µs   | 8.665 µs   |
+| 11  | 27.729 µs  | 155.413 µs |
