@@ -2,7 +2,7 @@
 
 use aoc_2021::*;
 
-use std::simd::i8x16;
+use std::{simd::i8x16, slice};
 
 const GRID_DIM: usize = 10;
 type Grid = [i8x16; GRID_DIM + 2];
@@ -12,21 +12,15 @@ fn main() {
         .day(11)
         // .input_override("5483143223\n2745854711\n5264556173\n6141336146\n6357385478\n4167524645\n2176841721\n6882881134\n4846848554\n5283751526\n")
         .extract(|text| {
-            let mut cells = text
-                .as_bytes()
-                .iter()
-                .enumerate()
-                // Skip newlines
-                .filter_map(|(i, &c)| (i % (GRID_DIM + 1) < GRID_DIM).then(|| (c - b'0') as i8));
-
             let mut grid = Grid::default();
-            let mut row = [0; 16];
-            for i in 0..GRID_DIM {
-                for j in 0..GRID_DIM {
-                    row[3 + j] = cells.next().unwrap();
-                }
+            let mut chunks = text.as_bytes().chunks_exact(GRID_DIM + 1);
+            for row in &mut grid[1..1 + GRID_DIM] {
+                let chunk = chunks.next().expect("input too short");
+                let ptr = chunk.as_ptr() as *const i8;
+                let chunk = unsafe { slice::from_raw_parts(ptr, chunk.len() - 1) };
 
-                grid[1 + i] = i8x16::from_array(row);
+                row.as_mut_array()[3..3 + GRID_DIM].copy_from_slice(chunk);
+                *row -= i8x16::splat(b'0' as i8);
             }
 
             grid
@@ -97,14 +91,10 @@ fn step_grid(grid: &mut Grid) -> u8 {
     grid[0] = i8x16::splat(1 << 7);
     grid[GRID_DIM + 1] = i8x16::splat(1 << 7);
 
-    // Create a mask for setting the flashed flag on all horizontal padding cells
-    let mut mask_buf = [0; 16];
-    mask_buf[..3].fill(1 << 7);
-    mask_buf[13..].fill(1 << 7);
-    let mask = i8x16::from_array(mask_buf);
-
+    let mut mask = i8x16::splat(1 << 7);
+    mask.as_mut_array()[3..13].fill(-1);
     for row in &mut grid[1..GRID_DIM + 1] {
-        *row |= mask;
+        *row &= mask;
     }
 
     flashes.horizontal_sum() as u8
