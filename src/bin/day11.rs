@@ -82,7 +82,7 @@ fn step_grid(grid: &mut Grid) -> u8 {
             grid[i + 1] += shifts + cur_flashes;
         }
 
-        if flashes.lanes_eq(old_flashes).all() {
+        if flashes == old_flashes {
             break;
         }
     }
