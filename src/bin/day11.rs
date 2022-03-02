@@ -65,7 +65,7 @@ fn step_grid(grid: &mut Grid) -> u8 {
             flashes += cur_flashes;
 
             // Set a flag on all flashed cells
-            grid[i] |= cur_flashes << 7;
+            grid[i] |= cur_flashes << i8x16::splat(7);
 
             let left_shift = cur_flashes.rotate_lanes_left::<1>();
             let right_shift = cur_flashes.rotate_lanes_right::<1>();
