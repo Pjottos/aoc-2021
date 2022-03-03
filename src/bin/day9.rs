@@ -1,98 +1,114 @@
+#![feature(portable_simd)]
+
 use aoc_2021::*;
 
-use std::collections::VecDeque;
+use std::simd::u8x32;
 
 fn main() {
     Harness::begin()
         .day(9)
         // .input_override("2199943210\n3987894921\n9856789892\n8767896789\n9899965678\n")
-        .extract(|text| text)
-        .run_part(1, |text| {
-            let mut window = VecDeque::new();
-            let mut risk_level = 0;
+        .extract(|text| {
+            let grid = text.as_bytes();
 
-            for (i, line) in text.lines().map(|line| line.as_bytes()).enumerate() {
-                window.push_back(line);
+            // assert!(grid.iter().all(|&c| (c >= b'0' && c <= b'9') || c == b'\n'));
+            let row_size = grid.iter().position(|&c| c == b'\n').unwrap() + 1;
+            // assert!(grid
+            //     .chunks(row_size)
+            //     .all(|chunk| *chunk.last().unwrap() == b'\n'));
 
-                if i == 1 {
-                    risk_level += count_edges(window[0], window[1], None);
-                    window[0]
-                        .windows(3)
-                        .zip(window[1].windows(3))
-                        .for_each(|(r0, r1)| {
-                            let same_row = r0[1] < r0[0] && r0[1] < r0[2];
-                            let below = r0[1] < r1[1];
+            (grid, row_size)
+        })
+        .run_part(1, |(grid, row_size)| {
+            let padded_read = |i: usize, j: usize| -> u8x32 {
+                // Compensate for taking one less when left-padding
+                let start = i * row_size + j * 30 - j.min(1);
+                let end = (start + 32).min((i + 1) * row_size - 1);
 
-                            if same_row && below {
-                                let v = u32::from(r0[1] - b'0');
-                                risk_level += 1 + v;
-                            }
-                        })
+                let mut buf = u8x32::splat(b'9');
+                let pad_left = (j == 0) as usize;
+                buf.as_mut_array()[pad_left..end - start]
+                    .copy_from_slice(&grid[start..end - pad_left]);
+                buf
+            };
+
+            let mut low_point_count = 0;
+
+            let row_count = grid.len() / row_size;
+            for i in 0..row_count {
+                for j in 0..row_size / 30 + (row_size % 30).min(1) {
+                    let base = padded_read(i, j);
+                    let left = base.rotate_lanes_right::<1>();
+                    let right = base.rotate_lanes_left::<1>();
+                    let up = if i == 0 {
+                        u8x32::splat(b'9')
+                    } else {
+                        padded_read(i - 1, j)
+                    };
+                    let down = if i == row_count - 1 {
+                        u8x32::splat(b'9')
+                    } else {
+                        padded_read(i + 1, j)
+                    };
+
+                    // Create a mask of elements in the base lane that are surrounded by higher value
+                    // elements in the grid.
+                    let mut mask = base.lanes_lt(left)
+                        & base.lanes_lt(right)
+                        & base.lanes_lt(up)
+                        & base.lanes_lt(down);
+
+                    // Ignore padding lanes
+                    mask.set(0, false);
+                    mask.set(31, false);
+
+                    // Bring ASCII values in range 0..=9 and add 1
+                    let true_values = base - u8x32::splat(b'0' - 1);
+                    let scores = mask.select(true_values, u8x32::splat(0));
+                    // The horizontal sum cannot overflow because the max score per cell is 9,
+                    // there are 30 cells (excluding padding) but it's only possible for a cell to have
+                    // a nonzero score if the cells to the left and right of it have a score of 0. Which
+                    // brings the maximum value of the horizontal sum to 15 * 9 = 135
+                    low_point_count += scores.horizontal_sum() as u32;
+
+                    // if mask.any() {
+                    //     println!("left-base-right");
+                    //     println!("{:?}", left);
+                    //     println!("{:?}", base);
+                    //     println!("{:?}", right);
+                    //     println!("up-base-down");
+                    //     println!("{:?}", up);
+                    //     println!("{:?}", base);
+                    //     println!("{:?}", down);
+                    //     println!("{:2.?}", scores);
+                    //     println!();
+                    //     println!();
+
+                    //     let up = &grid[(i - 1) * row_size + j * 30..(i - 1) * row_size + (j + 1) * 30];
+                    //     let base = &grid[i * row_size + j * 30..i * row_size + (j + 1) * 30];
+                    //     let down = &grid[(i + 1) * row_size + j * 30..(i + 1) * row_size + (j + 1) * 30];
+
+                    //     for (s, score) in scores.as_array().iter().skip(1).take(31).enumerate().filter(|(_, score)| **score != 0) {
+                    //         if up[s] < base[s]
+                    //             || down[s] < base[s]
+                    //             || s.checked_sub(1).map_or(b'9', |l| base[l]) < base[s]
+                    //             || base.get(s + 1).map_or(false, |&r| r < base[s])
+                    //         {
+                    //             println!("{i} {j}");
+                    //             println!("    {:?}", up);
+                    //             println!("    {:?}", base);
+                    //             println!("    {:?}", down);
+                    //             println!("{:2.?}", scores);
+                    //             println!();
+                    //         }
+                    //     }
+                    // }
                 }
-
-                if window.len() == 4 {
-                    window.pop_front();
-                }
-
-                if window.len() != 3 {
-                    continue;
-                } else {
-                    risk_level += count_edges(window[1], window[0], Some(window[2]));
-                    window[0]
-                        .windows(3)
-                        .zip(window[1].windows(3))
-                        .zip(window[2].windows(3))
-                        .for_each(|((r0, r1), r2)| {
-                            let above = r1[1] < r0[1];
-                            let same_row = r1[1] < r1[0] && r1[1] < r1[2];
-                            let below = r1[1] < r2[1];
-
-                            if above && same_row && below {
-                                let v = u32::from(r1[1] - b'0');
-                                risk_level += 1 + v;
-                            }
-                        });
-                };
             }
 
-            // Make sure we don't skip the last row.
-            risk_level += count_edges(window[2], window[1], None);
-            window[1]
-                .windows(3)
-                .zip(window[2].windows(3))
-                .for_each(|(r1, r2)| {
-                    let above = r2[1] < r1[1];
-                    let same_row = r2[1] < r2[0] && r2[1] < r2[2];
-
-                    if above && same_row {
-                        let v = u32::from(r2[1] - b'0');
-                        risk_level += 1 + v;
-                    }
-                });
-
-            risk_level
+            low_point_count
         })
-        .run_part(2, |_text| {});
-}
-
-fn count_edges(target_line: &[u8], adjacent_one: &[u8], adjacent_two: Option<&[u8]>) -> u32 {
-    let first = target_line[0];
-    let row_len = target_line.len();
-    let last = target_line[row_len - 1];
-
-    if first < target_line[1]
-        && first < adjacent_one[0]
-        && adjacent_two.map_or(true, |l| first < l[0])
-    {
-        1 + u32::from(first - b'0')
-    } else if last < target_line[row_len - 2]
-        && last < adjacent_one[row_len - 1]
-        && adjacent_two.map_or(true, |l| last < l[row_len - 1])
-    {
-        1 + u32::from(last - b'0')
-    } else {
-        0
-    }
+        .run_part(2, |(_grid, _row_size)| {});
 }
 
 #[allow(dead_code)]
